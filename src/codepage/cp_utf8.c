@@ -180,6 +180,10 @@ static HB_CDP_CMP_FUNC( UTF8_cmp )
       else if( fExact && nLenSecond < nLenFirst )
          iRet = 1;
    }
+   else if( iRet > 0 )
+      iRet = 1;
+   else
+      iRet = -1;
 #endif
 
    return iRet;
@@ -225,8 +229,8 @@ static HB_CDP_CMP_FUNC( UTF8_cmpi )
 
    while( nLen-- )
    {
-      HB_UCHAR u1 = cdp->upper[ ( HB_UCHAR ) * szFirst++ ],
-               u2 = cdp->upper[ ( HB_UCHAR ) * szSecond++ ];
+      HB_UCHAR u1 = cdp->upper[ ( HB_UCHAR ) *szFirst++ ],
+               u2 = cdp->upper[ ( HB_UCHAR ) *szSecond++ ];
       if( u1 != u2 )
       {
          iRet = ( u1 < u2 ) ? -1 : 1;

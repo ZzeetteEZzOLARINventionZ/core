@@ -50,7 +50,7 @@
 #include "error.ch"
 
 /* NOTE: Compared to CA-Cl*pper, Harbour:
-         - will accept character expressions for xKey, xFor and xWhile.
+         - will accept character expressions and symbols for xKey, xFor and xWhile.
          - has three extra parameters (cRDD, nConnection, cCodePage).
          - will default to active index key for xKey parameter.
          - won't crash with "No exported method: EVAL" if xKey is not
@@ -76,20 +76,20 @@ FUNCTION __dbTotal( cFile, xKey, aFields,;
    LOCAL oError
    LOCAL lError := .F.
 
-   IF HB_ISSTRING( xWhile )
-      bWhileBlock := hb_macroBlock( xWhile )
-      lRest := .T.
-   ELSEIF HB_ISBLOCK( xWhile )
+   IF HB_ISEVALITEM( xWhile )
       bWhileBlock := xWhile
+      lRest := .T.
+   ELSEIF HB_ISSTRING( xWhile ) .AND. ! Empty( xWhile )
+      bWhileBlock := hb_macroBlock( xWhile )
       lRest := .T.
    ELSE
       bWhileBlock := {|| .T. }
    ENDIF
 
-   IF HB_ISSTRING( xFor )
-      bForBlock := hb_macroBlock( xFor )
-   ELSEIF HB_ISBLOCK( xFor )
+   IF HB_ISEVALITEM( xFor )
       bForBlock := xFor
+   ELSEIF HB_ISSTRING( xFor ) .AND. ! Empty( xFor )
+      bForBlock := hb_macroBlock( xFor )
    ELSE
       bForBlock := {|| .T. }
    ENDIF
@@ -99,15 +99,13 @@ FUNCTION __dbTotal( cFile, xKey, aFields,;
    IF nRec != NIL
       dbGoto( nRec )
       nNext := 1
-   ELSE
-      IF nNext == NIL
-         nNext := -1
-         IF ! lRest
-            dbGoTop()
-         ENDIF
-      ELSE
-         lRest := .T.
+   ELSEIF nNext == NIL
+      nNext := -1
+      IF ! lRest
+         dbGoTop()
       ENDIF
+   ELSE
+      lRest := .T.
    ENDIF
 
    nOldArea := Select()
@@ -120,24 +118,25 @@ FUNCTION __dbTotal( cFile, xKey, aFields,;
 
    BEGIN SEQUENCE
 
-      IF Empty( xKey )
-         xKey := ordKey()
-      ENDIF
-
-      IF HB_ISSTRING( xKey )
-         bKeyBlock := hb_macroBlock( xKey )
-      ELSEIF HB_ISBLOCK( xKey )
+      IF HB_ISEVALITEM( xKey )
          bKeyBlock := xKey
       ELSE
-         bKeyBlock := {|| .T. }
+         IF Empty( xKey )
+            xKey := ordKey()
+         ENDIF
+         IF HB_ISSTRING( xKey ) .AND. ! Empty( xKey )
+            bKeyBlock := hb_macroBlock( xKey )
+         ELSE
+            bKeyBlock := {|| NIL }
+         ENDIF
       ENDIF
 
       aGetField := {}
       AEval( aFields, {| cField | AAdd( aGetField, __GetField( cField ) ) } )
       aFieldsSum := Array( Len( aGetField ) )
 
-      /* ; Keep it open after creating it. */
-      dbCreate( cFile, aNewDbStruct, cRDD, .T., "", NIL, cCodePage, nConnection )
+      /* Keep it open after creating it. */
+      dbCreate( cFile, aNewDbStruct, cRDD, .T., "", , cCodePage, nConnection )
       nNewArea := Select()
 
       dbSelectArea( nOldArea )
@@ -190,12 +189,12 @@ FUNCTION __dbTotal( cFile, xKey, aFields,;
    RETURN .T.
 
 STATIC FUNCTION __GetField( cField )
+
    LOCAL nCurrArea := Select()
    LOCAL nPos
    LOCAL oError
-   LOCAL lError
 
-   /* ; Is the field aliased? */
+   /* Is the field aliased? */
    IF ( nPos := At( "->", cField ) ) > 0
 
       IF Select( Left( cField, nPos - 1 ) ) != nCurrArea
@@ -208,8 +207,7 @@ STATIC FUNCTION __GetField( cField )
          oError:operation  := cField
          oError:subCode    := 1101
 
-         lError := Eval( ErrorBlock(), oError )
-         IF ! HB_ISLOGICAL( lError ) .OR. lError
+         IF hb_defaultValue( Eval( ErrorBlock(), oError ), .T. )
             __errInHandler()
          ENDIF
 
@@ -217,10 +215,9 @@ STATIC FUNCTION __GetField( cField )
       ENDIF
 
       cField := SubStr( cField, nPos + 2 )
-
    ENDIF
 
    RETURN FieldBlock( cField )
 
 FUNCTION __dbTransRec( nDstArea, aFieldsStru )
-   RETURN __dbTrans( nDstArea, aFieldsStru, NIL, NIL, 1 )
+   RETURN __dbTrans( nDstArea, aFieldsStru, , , 1 )

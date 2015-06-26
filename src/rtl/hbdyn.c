@@ -2,7 +2,7 @@
  * Harbour Project source code:
  * Dynamic call support
  *
- * Copyright 2009-2010 Viktor Szakats (harbour syenar.net)
+ * Copyright 2009-2010 Viktor Szakats (vszakats.net/harbour)
  * www - http://harbour-project.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -923,10 +923,7 @@ void hb_dynCall( int iFuncFlags, void * pFunctionRaw, int iParams, int iFirst, i
             iRetTypeRaw = _RETTYPERAW_INT64;
 
          if( iParams )
-         {
-            pArg = ( HB_DYNARG * ) hb_xgrab( iParams * sizeof( HB_DYNARG ) );
-            memset( pArg, 0, iParams * sizeof( HB_DYNARG ) );
-         }
+            pArg = ( HB_DYNARG * ) hb_xgrabz( iParams * sizeof( HB_DYNARG ) );
          else
             pArg = NULL;
 
@@ -1031,10 +1028,7 @@ void hb_dynCall( int iFuncFlags, void * pFunctionRaw, int iParams, int iFirst, i
             iRetTypeRaw = _RETTYPERAW_INT32;
 
          if( iParams )
-         {
-            pArg = ( HB_DYNARG * ) hb_xgrab( iParams * sizeof( HB_DYNARG ) );
-            memset( pArg, 0, iParams * sizeof( HB_DYNARG ) );
-         }
+            pArg = ( HB_DYNARG * ) hb_xgrabz( iParams * sizeof( HB_DYNARG ) );
          else
             pArg = NULL;
 

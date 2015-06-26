@@ -85,16 +85,46 @@ HB_EXTERN_BEGIN
 
 
 /* Inline assembler version of atomic operations on memory reference counters */
-#if defined( __GNUC__ )
+#if defined( __GNUC__ ) || ( defined( HB_OS_WIN ) && defined( __clang__ ) )
 
 #  if defined( HB_USE_GCCATOMIC_OFF )
 #     undef HB_USE_GCCATOMIC
 #  elif ( ( __GNUC__ > 4 ) || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 1) ) && \
         ! defined( __MINGW32CE__ ) && ! defined( HB_USE_GCCATOMIC )
 #     define HB_USE_GCCATOMIC
+#  elif defined( HB_OS_WIN ) && defined( __clang__ )
+#     define HB_USE_GCCATOMIC
 #  endif
 
-#  if defined( HB_CPU_X86 ) || defined( HB_CPU_X86_64 )
+#  if defined( HB_USE_GCCATOMIC )
+
+#     define HB_ATOM_INC( p )       __sync_add_and_fetch( (p), 1 )
+#     define HB_ATOM_DEC( p )       __sync_sub_and_fetch( (p), 1 )
+#     define HB_ATOM_GET( p )       ( *(p) )
+#     define HB_ATOM_SET( p, n )    do { *(p) = (n); } while(0)
+
+      static __inline__ void hb_spinlock_acquire( int * l )
+      {
+         for( ;; )
+         {
+            if( ! __sync_lock_test_and_set( l, 1 ) )
+               return;
+
+            #ifdef HB_SPINLOCK_REPEAT
+               if( ! __sync_lock_test_and_set( l, 1 ) )
+                  return;
+            #endif
+            HB_SCHED_YIELD();
+         }
+      }
+
+#     define HB_SPINLOCK_T          int
+#     define HB_SPINLOCK_INIT       0
+#     define HB_SPINLOCK_TRY(l)     (__sync_lock_test_and_set(l, 1)==0)
+#     define HB_SPINLOCK_RELEASE(l) __sync_lock_release(l)
+#     define HB_SPINLOCK_ACQUIRE(l) hb_spinlock_acquire(l)
+
+#  elif defined( HB_CPU_X86 ) || defined( HB_CPU_X86_64 )
 
 #     if HB_COUNTER_SIZE == 4
 
@@ -185,34 +215,6 @@ HB_EXTERN_BEGIN
 #     define HB_SPINLOCK_INIT       0
 #     define HB_SPINLOCK_TRY(l)     (hb_spinlock_trylock(l)==0)
 #     define HB_SPINLOCK_RELEASE(l) hb_spinlock_release(l)
-#     define HB_SPINLOCK_ACQUIRE(l) hb_spinlock_acquire(l)
-
-#  elif defined( HB_USE_GCCATOMIC )
-
-#     define HB_ATOM_INC( p )       __sync_add_and_fetch( (p), 1 )
-#     define HB_ATOM_DEC( p )       __sync_sub_and_fetch( (p), 1 )
-#     define HB_ATOM_GET( p )       ( *(p) )
-#     define HB_ATOM_SET( p, n )    do { *(p) = (n); } while(0)
-
-      static __inline__ void hb_spinlock_acquire( int * l )
-      {
-         for( ;; )
-         {
-            if( ! __sync_lock_test_and_set( l, 1 ) )
-               return;
-
-            #ifdef HB_SPINLOCK_REPEAT
-               if( ! __sync_lock_test_and_set( l, 1 ) )
-                  return;
-            #endif
-            HB_SCHED_YIELD();
-         }
-      }
-
-#     define HB_SPINLOCK_T          int
-#     define HB_SPINLOCK_INIT       0
-#     define HB_SPINLOCK_TRY(l)     (__sync_lock_test_and_set(l, 1)==0)
-#     define HB_SPINLOCK_RELEASE(l) __sync_lock_release(l)
 #     define HB_SPINLOCK_ACQUIRE(l) hb_spinlock_acquire(l)
 
 #  elif defined( HB_CPU_PPC )

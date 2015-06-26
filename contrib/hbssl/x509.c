@@ -2,7 +2,7 @@
  * Harbour Project source code:
  * OpenSSL API (X509) - Harbour interface.
  *
- * Copyright 2009 Viktor Szakats (harbour syenar.net)
+ * Copyright 2009 Viktor Szakats (vszakats.net/harbour)
  * www - http://harbour-project.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -50,8 +50,8 @@
 #include "hbapierr.h"
 
 #if defined( HB_OS_WIN )
-#  include <windows.h>
-#  include <wincrypt.h>
+   #include <windows.h>
+   #include <wincrypt.h>
 #endif
 
 #include "hbssl.h"

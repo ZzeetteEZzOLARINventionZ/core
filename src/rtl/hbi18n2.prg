@@ -60,8 +60,6 @@
 #define _I18N_EOL          Chr( 10 )
 #define _I18N_DELIM        ( Chr( 0 ) + Chr( 3 ) + Chr( 0 ) )
 
-#define LEFTEQUAL( l, r )  ( Left( l, Len( r ) ) == r )
-
 STATIC FUNCTION __i18n_fileName( cFileName )
 
    IF Set( _SET_DEFEXTENSIONS )
@@ -93,7 +91,7 @@ STATIC FUNCTION __i18n_strDecode( cLine, cValue, lCont )
 #define _BOM_VALUE      0xFEFF
 #define _UTF8_BOM       hb_utf8Chr( _BOM_VALUE ) /* e"\xEF\xBB\xBF" */
 
-FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
+FUNCTION __i18n_potArrayLoad( cFile, /* @ */ cErrorMsg )
 
    LOCAL cLine, cValue
    LOCAL nMode, nIndex, nOldIndex, nLine, n
@@ -102,9 +100,8 @@ FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
    LOCAL hFile
 
    __i18n_fileName( @cFile )
-   hFile := FOpen( cFile, FO_READ )
-   IF hFile == F_ERROR
-      cErrorMsg := "cannot open file: " + cFile
+   IF ( hFile := FOpen( cFile ) ) == F_ERROR
+      cErrorMsg := hb_StrFormat( "cannot open file: %1$s", cFile )
       RETURN NIL
    ENDIF
    cValue := Space( FSeek( hFile, 0, FS_END ) )
@@ -112,7 +109,7 @@ FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
    n := FRead( hFile, @cValue, hb_BLen( cValue ) )
    FClose( hFile )
    IF n != hb_BLen( cValue )
-      cErrorMsg := "cannot read from file: " + cFile
+      cErrorMsg := hb_StrFormat( "cannot read from file: %1$s", cFile )
       RETURN NIL
    ENDIF
    /* Strip UTF-8 BOM */
@@ -127,6 +124,7 @@ FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
    ENDIF
    aLines := hb_ATokens( cValue, _I18N_EOL )
 
+   cErrorMsg := NIL
    lCont := .F.
    nLine := 0
    nIndex := 1
@@ -140,8 +138,8 @@ FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
       IF lCont
          cValue += hb_eol()
       ELSE
-         IF LEFTEQUAL( cLine, "#" ) .AND. nMode == _I18N_NONE
-            IF LEFTEQUAL( cLine, "#:" )   // source code references
+         IF hb_LeftEq( cLine, "#" ) .AND. nMode == _I18N_NONE
+            IF hb_LeftEq( cLine, "#:" )   // source code references
                IF Empty( aItem[ _I18N_SOURCE ] )
                   aItem[ _I18N_SOURCE ] := ""
                ELSE
@@ -149,21 +147,21 @@ FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
                ENDIF
                aItem[ _I18N_SOURCE ] += StrTran( LTrim( SubStr( cLine, 3 ) ), "\", "/" )
 #if 0
-            ELSEIF LEFTEQUAL( cLine, "#," )  // flags
+            ELSEIF hb_LeftEq( cLine, "#," )  // flags
                cLine := LTrim( SubStr( cLine, 3 ) )
                IF cLine == "c-format"
                ELSE
-                  cErrorMsg := "unsupported flag: " + cLine
+                  cErrorMsg := hb_StrFormat( "unsupported flag: %1$s", cLine )
                   EXIT
                ENDIF
 #endif
             ENDIF
             cLine := ""
-         ELSEIF LEFTEQUAL( cLine, "msgctxt " ) .AND. nMode == _I18N_NONE
+         ELSEIF hb_LeftEq( cLine, "msgctxt " ) .AND. nMode == _I18N_NONE
             cLine := LTrim( SubStr( cLine, 9 ) )
             nMode := _I18N_CONTEXT
             cValue := NIL
-         ELSEIF LEFTEQUAL( cLine, "msgid " ) .AND. ;
+         ELSEIF hb_LeftEq( cLine, "msgid " ) .AND. ;
                ( nMode == _I18N_NONE .OR. nMode == _I18N_CONTEXT )
             nIndex := 1
             cLine := LTrim( SubStr( cLine, 7 ) )
@@ -176,7 +174,7 @@ FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
             ENDIF
             nMode := _I18N_MSGID
             cValue := NIL
-         ELSEIF LEFTEQUAL( cLine, "msgid_plural" ) .AND. nMode == _I18N_MSGID
+         ELSEIF hb_LeftEq( cLine, "msgid_plural" ) .AND. nMode == _I18N_MSGID
             nOldIndex := nIndex
             nIndex := 2
             n := 13
@@ -186,7 +184,7 @@ FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
                   cErrorMsg := "wrong plural form index"
                   EXIT
                ENDIF
-               WHILE IsDigit( SubStr( cLine, n, 1 ) )
+               DO WHILE IsDigit( SubStr( cLine, n, 1 ) )
                   ++n
                ENDDO
             ENDIF
@@ -202,7 +200,7 @@ FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
             AAdd( aItem[ _I18N_MSGID ], cValue )
             cLine := LTrim( SubStr( cLine, n ) )
             cValue := NIL
-         ELSEIF LEFTEQUAL( cLine, "msgstr " ) .AND. nMode == _I18N_MSGID
+         ELSEIF hb_LeftEq( cLine, "msgstr " ) .AND. nMode == _I18N_MSGID
             nIndex := 0
             cLine := LTrim( SubStr( cLine, 8 ) )
             nMode := _I18N_MSGSTR
@@ -212,18 +210,18 @@ FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
             ENDIF
             AAdd( aItem[ _I18N_MSGID ], cValue )
             cValue := NIL
-         ELSEIF LEFTEQUAL( cLine, "msgstr[" ) .AND. ;
+         ELSEIF hb_LeftEq( cLine, "msgstr[" ) .AND. ;
                ( nMode == _I18N_MSGID .OR. nMode == _I18N_MSGSTR )
             nOldIndex := iif( nMode == _I18N_MSGSTR, nIndex, -1 )
             nIndex := 0
             n := 8
             IF IsDigit( SubStr( cLine, n, 1 ) )
                nIndex := Val( SubStr( cLine, n ) )
-               WHILE IsDigit( SubStr( cLine, n, 1 ) )
+               DO WHILE IsDigit( SubStr( cLine, n, 1 ) )
                   ++n
                ENDDO
             ENDIF
-            WHILE SubStr( cLine, n, 1 ) == " "
+            DO WHILE SubStr( cLine, n, 1 ) == " "
                ++n
             ENDDO
             IF ! SubStr( cLine, n, 1 ) == "]"
@@ -235,8 +233,8 @@ FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
                EXIT
             ENDIF
             IF cValue == NIL
-               cErrorMsg := "undefined " + iif( nMode == _I18N_MSGID, ;
-                  "msgid", "msgstr" ) + " value"
+               cErrorMsg := hb_StrFormat( "undefined %1$s value", ;
+                  iif( nMode == _I18N_MSGID, "msgid", "msgstr" ) )
                EXIT
             ENDIF
             aItem[ _I18N_PLURAL ] := .T.
@@ -286,7 +284,7 @@ FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
    ENDIF
 
    IF cErrorMsg != NIL
-      cErrorMsg := cFile + ":" + hb_ntos( nLine ) + ";" + cErrorMsg
+      cErrorMsg := hb_StrFormat( "%1$s:%2$d;%3$s", cFile, nLine, cErrorMsg )
       aTrans := NIL
    ENDIF
 
@@ -294,14 +292,11 @@ FUNCTION __i18n_potArrayLoad( cFile, cErrorMsg )
 
 STATIC FUNCTION __i18n_IsBOM_UTF8( cFileName )
 
-   LOCAL fhnd := FOpen( cFileName, FO_READ )
+   LOCAL fhnd
    LOCAL cBuffer
-   LOCAL nLen
 
-   IF fhnd != F_ERROR
-      nLen := hb_BLen( _UTF8_BOM )
-      cBuffer := Space( nLen )
-      FRead( fhnd, @cBuffer, nLen )
+   IF ( fhnd := FOpen( cFileName ) ) != F_ERROR
+      cBuffer := hb_FReadLen( fhnd, hb_BLen( _UTF8_BOM ) )
       FClose( fhnd )
       IF cBuffer == _UTF8_BOM
          RETURN .T.
@@ -311,10 +306,7 @@ STATIC FUNCTION __i18n_IsBOM_UTF8( cFileName )
    RETURN .F.
 
 FUNCTION __i18n_potArraySort( aTrans )
-
-   ASort( aTrans,,, {| item1, item2 | __i18n_ItemToStr( item1 ) < __i18n_ItemToStr( item2 ) } )
-
-   RETURN aTrans
+   RETURN ASort( aTrans,,, {| item1, item2 | __i18n_ItemToStr( item1 ) < __i18n_ItemToStr( item2 ) } )
 
 STATIC FUNCTION __i18n_ItemToStr( item )
 
@@ -376,7 +368,7 @@ FUNCTION __i18n_potArrayClean( aTrans, lKeepSource, lKeepVoidTranslations, bTran
 
    RETURN aTrans
 
-FUNCTION __i18n_potArraySave( cFile, aTrans, cErrorMsg, lVersionNo, lSourceRef )
+FUNCTION __i18n_potArraySave( cFile, aTrans, /* @ */ cErrorMsg, lVersionNo, lSourceRef )
 
    LOCAL aItem
    LOCAL hFile
@@ -408,13 +400,16 @@ FUNCTION __i18n_potArraySave( cFile, aTrans, cErrorMsg, lVersionNo, lSourceRef )
          cPOT += cEol
       ENDIF
       FOR EACH msg IN aItem[ _I18N_MSGID ]
-         IF msg:__enumIndex() == 1
+         SWITCH msg:__enumIndex()
+         CASE 1
             cPOT += "msgid "
-         ELSEIF msg:__enumIndex() == 2
+            EXIT
+         CASE 2
             cPOT += "msgid_plural "
-         ELSE
+            EXIT
+         OTHERWISE
             cPOT += "msgid_plural" + hb_ntos( msg:__enumIndex() - 1 ) + " "
-         ENDIF
+         ENDSWITCH
          cPOT += __i18n_strEncode( msg )
          cPOT += cEol
       NEXT
@@ -431,12 +426,12 @@ FUNCTION __i18n_potArraySave( cFile, aTrans, cErrorMsg, lVersionNo, lSourceRef )
    NEXT
 
    __i18n_fileName( @cFile )
-   hFile := FCreate( cFile )
-   IF hFile == F_ERROR
-      cErrorMsg := "cannot create translation file: " + cFile
+   IF ( hFile := FCreate( cFile ) ) == F_ERROR
+      cErrorMsg := hb_StrFormat( "cannot create translation file: %1$s", cFile )
    ELSEIF FWrite( hFile, cPOT ) != hb_BLen( cPOT )
-      cErrorMsg := "cannot write to file: " + cFile
+      cErrorMsg := hb_StrFormat( "cannot write to file: %1$s", cFile )
    ELSE
+      cErrorMsg := NIL
       lRet := .T.
    ENDIF
    FClose( hFile )
@@ -458,10 +453,10 @@ FUNCTION __i18n_potArrayToHash( aTrans, lEmpty, hI18N )
    FOR EACH aItem IN aTrans
       IF lEmpty .OR. ! Empty( aItem[ _I18N_MSGSTR, 1 ] )
          cContext := aItem[ _I18N_CONTEXT ]
-         IF ! cContext $ hTrans
-            hTrans[ cContext ] := hContext := { => }
-         ELSE
+         IF cContext $ hTrans
             hContext := hTrans[ cContext ]
+         ELSE
+            hTrans[ cContext ] := hContext := { => }
          ENDIF
          IF Empty( aItem[ _I18N_MSGSTR, 1 ] )
             IF ! aItem[ _I18N_MSGID, 1 ] $ hContext
@@ -515,9 +510,7 @@ FUNCTION __i18n_hashJoin( hTrans, hTrans2 )
 
    hContext := hTrans[ "CONTEXT" ]
    FOR EACH hCtx in hTrans2[ "CONTEXT" ]
-      IF ! hCtx:__enumKey() $ hContext
-         hContext[ hCtx:__enumKey() ] := hb_HClone( hCtx )
-      ELSE
+      IF hCtx:__enumKey() $ hContext
          hDstCtx := hContext[ hCtx:__enumKey() ]
          FOR EACH xTrans IN hCtx
             IF ! Empty( xTrans ) .AND. ;
@@ -527,6 +520,8 @@ FUNCTION __i18n_hashJoin( hTrans, hTrans2 )
                   AClone( xTrans ), xTrans )
             ENDIF
          NEXT
+      ELSE
+         hContext[ hCtx:__enumKey() ] := hb_HClone( hCtx )
       ENDIF
    NEXT
 
@@ -547,10 +542,7 @@ FUNCTION __i18n_potArrayJoin( aTrans, aTrans2, hIndex )
 
    FOR EACH aItem in aTrans2
       ctx := aItem[ _I18N_CONTEXT ] + _I18N_DELIM + aItem[ _I18N_MSGID, 1 ]
-      IF ! ctx $ hIndex
-         AAdd( aTrans, AClone( aItem ) )
-         hIndex[ ctx ] := Len( aTrans )
-      ELSE
+      IF ctx $ hIndex
          aDest := aTrans[ hIndex[ ctx ] ]
          IF aItem[ _I18N_PLURAL ]
             aDest[ _I18N_PLURAL ] := .T.
@@ -574,6 +566,9 @@ FUNCTION __i18n_potArrayJoin( aTrans, aTrans2, hIndex )
             Empty( aDest[ _I18N_MSGSTR, 1 ] ) ) )
             aDest[ _I18N_MSGSTR ] := AClone( aItem[ _I18N_MSGSTR ] )
          ENDIF
+      ELSE
+         AAdd( aTrans, AClone( aItem ) )
+         hIndex[ ctx ] := Len( aTrans )
       ENDIF
    NEXT
 
@@ -584,8 +579,7 @@ FUNCTION hb_i18n_LoadPOT( cFile, pI18N, cErrorMsg )
    LOCAL aTrans
    LOCAL hI18N
 
-   aTrans := __i18n_potArrayLoad( cFile, @cErrorMsg )
-   IF aTrans != NIL
+   IF ( aTrans := __i18n_potArrayLoad( cFile, @cErrorMsg ) ) != NIL
       IF HB_ISPOINTER( pI18N )
          hI18N := __i18n_hashTable( pI18N )
       ENDIF
@@ -598,7 +592,7 @@ FUNCTION hb_i18n_LoadPOT( cFile, pI18N, cErrorMsg )
 
    RETURN pI18N
 
-FUNCTION hb_i18n_SavePOT( cFile, pI18N, cErrorMsg )
+FUNCTION hb_i18n_SavePOT( cFile, pI18N, /* @ */ cErrorMsg )
 
    LOCAL hI18N
    LOCAL hFile
@@ -647,13 +641,14 @@ FUNCTION hb_i18n_SavePOT( cFile, pI18N, cErrorMsg )
       NEXT
 
       __i18n_fileName( @cFile )
-      hFile := FCreate( cFile )
-      IF hFile == F_ERROR
-         cErrorMsg := "cannot create translation file: " + cFile
+      IF ( hFile := FCreate( cFile ) ) == F_ERROR
+         cErrorMsg := hb_StrFormat( "cannot create translation file: %1$s", cFile )
          lRet := .F.
       ELSEIF FWrite( hFile, cPOT ) != hb_BLen( cPOT )
-         cErrorMsg := "cannot write to file: " + cFile
+         cErrorMsg := hb_StrFormat( "cannot write to file: %1$s", cFile )
          lRet := .F.
+      ELSE
+         cErrorMsg := NIL
       ENDIF
       FClose( hFile )
 

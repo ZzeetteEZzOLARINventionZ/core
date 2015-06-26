@@ -2,7 +2,7 @@
  * Harbour Project source code:
  * Harbour NETIO server daemon
  *
- * Copyright 2010-2012 Viktor Szakats (harbour syenar.net)
+ * Copyright 2010-2012 Viktor Szakats (vszakats.net/harbour)
  * Copyright 2009 Przemyslaw Czerpak <druzus / at / priv.onet.pl>
  * www - http://harbour-project.org
  *
@@ -286,7 +286,7 @@ PROCEDURE netiosrv_Main( lUI, ... )
       ENDIF
 
       /* Command prompt */
-      DO WHILE ! netiosrv[ _NETIOSRV_lQuit ]
+      DO WHILE ! netiosrv[ _NETIOSRV_lQuit ] .and. inkey() != 27
          hb_idleSleep( 5 )
       ENDDO
 
@@ -835,7 +835,7 @@ STATIC PROCEDURE HB_Logo()
 
    OutStd( ;
       "Harbour NETIO Server " + StrTran( Version(), "Harbour " ) + hb_eol() + ;
-      "Copyright (c) 2009-2013, Przemyslaw Czerpak, Viktor Szakats" + hb_eol() + ;
+      "Copyright (c) 2009-2015, Przemyslaw Czerpak, Viktor Szakats" + hb_eol() + ;
       "http://harbour-project.org/" + hb_eol() + ;
       hb_eol() )
 

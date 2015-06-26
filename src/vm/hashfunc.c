@@ -147,6 +147,21 @@ HB_FUNC( HB_HGETDEF )
       hb_errRT_BASE( EG_ARG, 1123, NULL, HB_ERR_FUNCNAME, HB_ERR_ARGS_BASEPARAMS );
 }
 
+HB_FUNC( HB_HGETREF )
+{
+   PHB_ITEM pHash = hb_param( 1, HB_IT_HASH );
+   PHB_ITEM pKey = hb_param( 2, HB_IT_HASHKEY );
+
+   if( pHash && pKey )
+   {
+      PHB_ITEM pDest = hb_hashGetItemPtr( pHash, pKey, HB_HASH_AUTOADD_ACCESS );
+      hb_itemParamStore( 3, pDest );
+      hb_retl( pDest != NULL );
+   }
+   else
+      hb_retl( HB_FALSE );
+}
+
 HB_FUNC( HB_HSET )
 {
    PHB_ITEM pHash = hb_param( 1, HB_IT_HASH );
@@ -364,11 +379,11 @@ HB_FUNC( HB_HMERGE )
 {
    PHB_ITEM pDest = hb_param( 1, HB_IT_HASH );
    PHB_ITEM pSource = hb_param( 2, HB_IT_HASH );
-   PHB_ITEM pAction = hb_param( 3, HB_IT_BLOCK | HB_IT_NUMERIC );
+   PHB_ITEM pAction = hb_param( 3, HB_IT_EVALITEM | HB_IT_NUMERIC );
 
    if( pDest && pSource )
    {
-      if( pAction && HB_IS_BLOCK( pAction ) )
+      if( pAction && HB_IS_EVALITEM( pAction ) )
       {
          HB_SIZE nLen = hb_hashLen( pSource ), nPos = 0;
          while( ++nPos <= nLen )
@@ -405,7 +420,7 @@ HB_FUNC( HB_HMERGE )
 HB_FUNC( HB_HEVAL )
 {
    PHB_ITEM pHash = hb_param( 1, HB_IT_HASH );
-   PHB_ITEM pBlock = hb_param( 2, HB_IT_BLOCK );
+   PHB_ITEM pBlock = hb_param( 2, HB_IT_EVALITEM );
 
    if( pHash && pBlock )
    {
@@ -455,7 +470,7 @@ HB_FUNC( HB_HSCAN )
          ++nStart;
       nCount = HB_ISNUM( 4 ) ? ( HB_SIZE ) hb_parns( 4 ) : nLen - nStart + 1;
 
-      if( HB_IS_BLOCK( pValue ) )
+      if( HB_IS_EVALITEM( pValue ) )
       {
          while( nCount-- )
          {
@@ -722,7 +737,12 @@ HB_FUNC( HB_HAUTOADD )
    if( pHash )
    {
       int iOldFlags = hb_hashGetFlags( pHash ) & HB_HASH_AUTOADD_MASK;
+
       hb_retni( iOldFlags );
+
+      if( hb_pcount() >= 3 )
+         hb_hashSetDefault( pHash, hb_param( 3, HB_IT_ANY ) );
+
       if( pValue )
       {
          if( HB_IS_LOGICAL( pValue ) )
@@ -742,8 +762,6 @@ HB_FUNC( HB_HAUTOADD )
                hb_hashSetFlags( pHash, iNewFlags );
          }
       }
-      if( hb_pcount() >= 3 )
-         hb_hashSetDefault( pHash, hb_param( 3, HB_IT_ANY ) );
    }
    else
       hb_errRT_BASE( EG_ARG, 2017, NULL, HB_ERR_FUNCNAME, HB_ERR_ARGS_BASEPARAMS );

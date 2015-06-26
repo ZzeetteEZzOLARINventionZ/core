@@ -50,7 +50,7 @@
  * The following parts are Copyright of the individual authors.
  * www - http://harbour-project.org
  *
- * Copyright 1999-2001 Viktor Szakats (harbour syenar.net)
+ * Copyright 1999-2001 Viktor Szakats (vszakats.net/harbour)
  *    GetE()
  *
  * See COPYING.txt for licensing terms.
@@ -98,7 +98,9 @@ HB_FUNC( GETENV )
 }
 
 /* NOTE: Undocumented Clipper function. [vszakats] */
+#ifdef HB_CLP_UNDOC
 HB_FUNC_TRANSLATE( GETE, GETENV )
+#endif
 
 /* NOTE: Harbour extended version of GetEnv(). The 2nd parameter
          can be used to specify a default value, returned if the

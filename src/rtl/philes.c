@@ -2,7 +2,7 @@
  * Harbour Project source code:
  * The FileSys API (Harbour level)
  *
- * Copyright 1999-2009 Viktor Szakats (harbour syenar.net)
+ * Copyright 1999-2009 Viktor Szakats (vszakats.net/harbour)
  * Copyright 2008 Przemyslaw Czerpak <druzus / at / priv.onet.pl>
  * Copyright 2000 David G. Holm <dholm@jsd-llc.com>
  * Copyright 1999 Manuel Ruiz <mrt@joca.es>
@@ -241,7 +241,7 @@ HB_FUNC( FREADSTR )
 
       if( nToRead > 0 )
       {
-         HB_FHANDLE fhnd = ( HB_FHANDLE ) hb_parni( 1 );
+         HB_FHANDLE fhnd = hb_numToHandle( hb_parnint( 1 ) );
          char * buffer = ( char * ) hb_xgrab( nToRead + 1 );
          HB_SIZE nRead;
 
@@ -254,6 +254,27 @@ HB_FUNC( FREADSTR )
       }
       else
          hb_retc_null();
+   }
+   else
+      hb_retc_null();
+   hb_fsSetFError( uiError );
+}
+
+HB_FUNC( HB_FREADLEN )
+{
+   HB_ERRCODE uiError = 0;
+   HB_SIZE nToRead = hb_parns( 2 );
+
+   if( nToRead > 0 && HB_ISNUM( 1 ) )
+   {
+      HB_FHANDLE fhnd = hb_numToHandle( hb_parnint( 1 ) );
+      char * buffer = ( char * ) hb_xgrab( nToRead + 1 );
+      HB_SIZE nRead;
+
+      nRead = hb_fsReadLarge( fhnd, buffer, nToRead );
+      uiError = hb_fsError();
+
+      hb_retclen_buffer( buffer, nRead );
    }
    else
       hb_retc_null();

@@ -74,17 +74,20 @@
 #define HB_GTE_CREATED                    19
 #define HB_GTE_CLOSED                     20
 
-#define HB_GTI_SETFONT                    71
-#define HB_GTI_PRESPARAMS                 72
-#define HB_GTI_ENABLE                     73
-#define HB_GTI_DISABLE                    74
-#define HB_GTI_SETFOCUS                   75
-#define HB_GTI_DEFERPAINT                 76
-#define HB_GTI_ACTIVATESELECTCOPY         77
-#define HB_GTI_SETPOSANDSIZE              78
-#define HB_GTI_REFRESH                    79
-#define HB_GTI_NOTIFIERBLOCKGUI           80
-#define HB_GTI_MAXIMIZABLE                81
+#define HB_GTI_EXTENDED                   100
+
+#define HB_GTI_SETFONT                    ( HB_GTI_EXTENDED +  1 )
+#define HB_GTI_PRESPARAMS                 ( HB_GTI_EXTENDED +  2 )
+#define HB_GTI_ENABLE                     ( HB_GTI_EXTENDED +  3 )
+#define HB_GTI_DISABLE                    ( HB_GTI_EXTENDED +  4 )
+#define HB_GTI_SETFOCUS                   ( HB_GTI_EXTENDED +  5 )
+#define HB_GTI_DEFERPAINT                 ( HB_GTI_EXTENDED +  6 )
+#define HB_GTI_ACTIVATESELECTCOPY         ( HB_GTI_EXTENDED +  7 )
+#define HB_GTI_SETPOSANDSIZE              ( HB_GTI_EXTENDED +  8 )
+#define HB_GTI_REFRESH                    ( HB_GTI_EXTENDED +  9 )
+#define HB_GTI_NOTIFIERBLOCKGUI           ( HB_GTI_EXTENDED + 10 )
+#define HB_GTI_MAXIMIZABLE                ( HB_GTI_EXTENDED + 11 )
+#define HB_GTI_BORDERSIZES                ( HB_GTI_EXTENDED + 12 )
 
 /* Presentation Parameters | HB_GTI_PRESPARAMS */
 #define HB_GTI_PP_EXSTYLE                 1
@@ -158,6 +161,7 @@
 #define GOBJ_OBJDATA_COLORBK              7
 #define GOBJ_OBJDATA_IMAGE                8
 #define GOBJ_OBJDATA_BLOCK                9
+#define GOBJ_OBJDATA_PICTUREEX            10
 
 #define GOBJ_IMAGESOURCE_SLOT             1
 #define GOBJ_IMAGESOURCE_RESOURCE         2
@@ -185,6 +189,7 @@
 #define GOBJ_OBJTYPE_OUTLINEEX            18
 #define GOBJ_OBJTYPE_GRIDVERT             19
 #define GOBJ_OBJTYPE_GRIDHORZ             20
+#define GOBJ_OBJTYPE_LABEL_EX2            21
 
 #define GOBJ_OBJTYPE_OBJECT               25  /* One of the above objects */
 

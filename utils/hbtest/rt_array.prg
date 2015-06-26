@@ -2,7 +2,7 @@
  * Harbour Project source code:
  * Regression tests for the runtime library (array)
  *
- * Copyright 1999-2001 Viktor Szakats (harbour syenar.net)
+ * Copyright 1999-2001 Viktor Szakats (vszakats.net/harbour)
  * www - http://harbour-project.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -208,8 +208,15 @@ PROCEDURE Main_ARRAY()
 #endif
    HBTEST Array( 1 )                      IS "{.[1].}"
    HBTEST Array( -1 )                     IS "E 2 BASE 1131 Bound error (array dimension) OS:0 #:0 "
+#ifdef __HARBOUR__
+   /* disable Harbour extended optimizations to test correct RTE message */
+   #pragma -ko-
+#endif
    HBTEST Array( 1, 0, -10 )              IS "E 2 BASE 1131 Bound error (array dimension) OS:0 #:0 "
    HBTEST Array( 1, 0, "A" )              IS NIL
+#ifdef __HARBOUR__
+   #pragma -ko+
+#endif
    HBTEST Array( 1, 0, 2 )                IS "{.[1].}"
    HBTEST Array( 4, 3, 2 )                IS "{.[4].}"
    HBTEST Array( 0, 3, 2 )                IS "{.[0].}"

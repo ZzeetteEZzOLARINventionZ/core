@@ -2,7 +2,7 @@
  * Harbour Project source code:
  * OpenSSL API (RAND) - Harbour interface.
  *
- * Copyright 2009 Viktor Szakats (harbour syenar.net)
+ * Copyright 2009 Viktor Szakats (vszakats.net/harbour)
  * www - http://harbour-project.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -47,7 +47,6 @@
  */
 
 #include "hbapi.h"
-#include "hbapierr.h"
 
 #include "hbssl.h"
 
@@ -73,7 +72,7 @@ HB_FUNC( RAND_EVENT )
 #if defined( HB_OS_WIN ) && ! defined( __CYGWIN__ )
    hb_retni( RAND_event( hb_parni( 1 ), ( WPARAM ) hb_parnint( 2 ), ( LPARAM ) hb_parnint( 3 ) ) );
 #else
-   hb_retni( 0 );
+   hb_retni( 1 );
 #endif
 }
 

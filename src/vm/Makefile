@@ -1,4 +1,3 @@
-
 ROOT := ../../
 
 include $(TOP)$(ROOT)config/global.mk
@@ -108,6 +107,7 @@ C_SOURCES += \
    proc.c \
    procaddr.c \
    runner.c \
+   short.c \
    vm.c \
    $(C_MAIN) \
 

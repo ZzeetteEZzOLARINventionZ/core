@@ -2,7 +2,7 @@
  * Harbour Project source code:
  * Internal versions for database version (Clipper undocumented)
  *
- * Copyright 1999-2001 Viktor Szakats (harbour syenar.net)
+ * Copyright 1999-2001 Viktor Szakats (vszakats.net/harbour)
  * www - http://harbour-project.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -58,9 +58,6 @@ HB_FUNC_TRANSLATE( __DBGOTO, DBGOTO )
 HB_FUNC_TRANSLATE( __DBAPPEND, DBAPPEND )
 HB_FUNC_TRANSLATE( __DBDELETE, DBDELETE )
 HB_FUNC_TRANSLATE( __DBRECALL, DBRECALL )
-/* NOTE: Clipper does exactly that, __dbCommit() will call dbCommitAll()
-         This may be a bug. */
-HB_FUNC_TRANSLATE( __DBCOMMIT, DBCOMMITALL )
 HB_FUNC_TRANSLATE( __DBCOMMITALL, DBCOMMITALL )
 HB_FUNC_TRANSLATE( __DBUNLOCK, DBUNLOCK )
 HB_FUNC_TRANSLATE( __DBUNLALL, DBUNLOCKALL )

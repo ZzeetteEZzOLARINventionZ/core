@@ -1,8 +1,8 @@
 /*
  * Harbour Project source code:
- * SORT RDD module
+ *    IOUSRD - module to create new FILE IO redirectors at prg level
  *
- * Copyright 1999 Bruno Cantero <bruno@issnet.net>
+ * Copyright 2014 Przemyslaw Czerpak <druzus / at / priv.onet.pl>
  * www - http://harbour-project.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,44 +46,48 @@
  *
  */
 
-#ifndef HB_DBSORT_H_
-#define HB_DBSORT_H_
+#ifndef _HBIOUSR_CH
+#define _HBIOUSR_CH
 
-#include "hbrdddbf.h"
+/* method numbers */
+#define IOUSR_ACCEPT                 1
+#define IOUSR_EXISTS                 2
+#define IOUSR_DELETE                 3
+#define IOUSR_RENAME                 4
+#define IOUSR_COPY                   5
 
-HB_EXTERN_BEGIN
+#define IOUSR_DIREXISTS              6
+#define IOUSR_DIRMAKE                7
+#define IOUSR_DIRREMOVE              8
+#define IOUSR_DIRSPACE               9
+#define IOUSR_DIRECTORY             10
 
-/*
- *  DBQUICKSORT
- *  -----------
- *  The Quick Sort Item Structure
- */
+#define IOUSR_TIMEGET               11
+#define IOUSR_TIMESET               12
+#define IOUSR_ATTRGET               13
+#define IOUSR_ATTRSET               14
 
-typedef struct _DBQUICKSORT
-{
-   HB_FHANDLE hFile;
-   char szTempName[ HB_PATH_MAX ];
-   HB_BYTE * pBuffer;
-   HB_BYTE * pSwapBufferA;
-   HB_BYTE * pSwapBufferB;
-   HB_BYTE * pCmpBufferA;
-   HB_BYTE * pCmpBufferB;
-   HB_USHORT uiRecordLen;
-   HB_USHORT uiMaxRecords;
-   LPDBSORTINFO pSortInfo;
-} DBQUICKSORT;
+#define IOUSR_LINK                  15
+#define IOUSR_LINKSYM               16
+#define IOUSR_LINKREAD              17
 
-typedef DBQUICKSORT * LPDBQUICKSORT;
+#define IOUSR_OPEN                  18
+#define IOUSR_CLOSE                 19
+#define IOUSR_LOCK                  20
+#define IOUSR_LOCKTEST              21
+#define IOUSR_READ                  22
+#define IOUSR_WRITE                 23
+#define IOUSR_READAT                24
+#define IOUSR_WRITEAT               25
+#define IOUSR_TRUNCAT               26
+#define IOUSR_SEEK                  27
+#define IOUSR_SIZE                  28
+#define IOUSR_EOF                   29
+#define IOUSR_FLUSH                 30
+#define IOUSR_COMMIT                31
+#define IOUSR_CONFIGURE             32
+#define IOUSR_HANDLE                33
 
-/*
- *  PROTOTYPES
- *  ----------
- */
-extern HB_BOOL hb_dbQSortInit( LPDBQUICKSORT pQuickSort, LPDBSORTINFO pSortInfo, HB_USHORT uiRecordLen );
-extern void    hb_dbQSortExit( LPDBQUICKSORT pQuickSort );
-extern HB_BOOL hb_dbQSortAdvance( LPDBQUICKSORT pQuickSort, HB_USHORT uiCount );
-extern void    hb_dbQSortComplete( LPDBQUICKSORT pQuickSort );
+#define IOUSR_METHODCOUNT           33
 
-HB_EXTERN_END
-
-#endif /* HB_DBSORT_H_ */
+#endif /* _HBIOUSR_CH */

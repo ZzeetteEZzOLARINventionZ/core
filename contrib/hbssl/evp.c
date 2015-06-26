@@ -2,7 +2,7 @@
  * Harbour Project source code:
  * OpenSSL API (EVP) - Harbour interface.
  *
- * Copyright 2009 Viktor Szakats (harbour syenar.net)
+ * Copyright 2009 Viktor Szakats (vszakats.net/harbour)
  * www - http://harbour-project.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -100,9 +100,9 @@ HB_FUNC( EVP_BYTESTOKEY )
       unsigned char iv[ EVP_MAX_IV_LENGTH ];
 
       hb_retni( EVP_BytesToKey( cipher,
-                                md,
-                                ( const unsigned char * ) hb_parc( 3 ) /* salt */,
-                                ( const unsigned char * ) hb_parcx( 4 ) /* data */,
+                                ( HB_SSL_CONST EVP_MD * ) md,
+                                ( HB_SSL_CONST unsigned char * ) hb_parc( 3 ) /* salt */,
+                                ( HB_SSL_CONST unsigned char * ) hb_parcx( 4 ) /* data */,
                                 ( int ) hb_parclen( 4 ),
                                 hb_parni( 5 ) /* count */,
                                 key,

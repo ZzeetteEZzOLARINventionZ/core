@@ -96,7 +96,7 @@ HB_EXTERN_BEGIN
 
 /*-*/
 
-#define WVT_CHAR_QUEUE_SIZE         128
+#define WVT_CHAR_QUEUE_SIZE         256
 #define WVT_MAX_TITLE_SIZE          128
 #define WVT_MAX_ROWS                256
 #define WVT_MAX_COLS               1024
@@ -460,6 +460,9 @@ typedef struct
    HB_BOOL   bTracking;                     /* To track if mouse has eneter or left the window area      */
 
    HB_BOOL   bResizing;                     /* To know when it is in resizing mode                       */
+   HB_BOOL   bAlreadySizing;
+   HB_BOOL   bComposited;
+   int       CloseMode;
 
    PHB_GOBJS gObjs;                         /* Graphic Objects                                           */
 

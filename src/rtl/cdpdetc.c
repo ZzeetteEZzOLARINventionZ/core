@@ -2,7 +2,7 @@
  * Harbour Project source code:
  *    CP detection (low-level)
  *
- * Copyright 2009-2012 Viktor Szakats (harbour syenar.net)
+ * Copyright 2009-2012 Viktor Szakats (vszakats.net/harbour)
  * www - http://harbour-project.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -65,6 +65,15 @@ HB_FUNC( __WAPI_GETOEMCP )
 {
 #if defined( HB_OS_WIN )
    hb_retnl( GetOEMCP() );
+#else
+   hb_retnl( 0 );
+#endif
+}
+
+HB_FUNC( __WAPI_GETCONSOLEOUTPUTCP )
+{
+#if defined( HB_OS_WIN ) && ! defined( HB_OS_WIN_CE )
+   hb_retnl( GetConsoleOutputCP() );
 #else
    hb_retnl( 0 );
 #endif

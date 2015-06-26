@@ -2,7 +2,7 @@
  * Harbour Project source code:
  * Harbour Make (alias hbmk/hbmk2/hbrun)
  *
- * Copyright 1999-2013 Viktor Szakats (harbour syenar.net)
+ * Copyright 1999-2013 Viktor Szakats (vszakats.net/harbour)
  * www - http://harbour-project.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -813,22 +813,21 @@ STATIC PROCEDURE hbmk_local_entry( ... )
 
       /* Exit on first failure */
       IF nResult != _EXIT_OK
-         EXIT
+         IF lExitStr
+            OutErr( hb_StrFormat( _SELF_NAME_ + iif( ! Empty( cTargetName ), "[" + cTargetName + "]", "" ) + ;
+                                  ": " + I_( "Exit code: %1$d: %2$s" ), nResult, ExitCodeStr( nResult ) ) + _OUT_EOL )
+         ENDIF
+         IF nResult != _EXIT_STOP
+            IF lPause
+               OutStd( I_( "Press any key to continue..." ) )
+               Inkey( 0 )
+            ENDIF
+            EXIT
+         ENDIF
       ENDIF
 
       ++nTargetTO_DO
    ENDDO
-
-   IF nResult != _EXIT_OK
-      IF lExitStr
-         OutErr( hb_StrFormat( _SELF_NAME_ + iif( ! Empty( cTargetName ), "[" + cTargetName + "]", "" ) + ;
-                               ": " + I_( "Exit code: %1$d: %2$s" ), nResult, ExitCodeStr( nResult ) ) + _OUT_EOL )
-      ENDIF
-      IF lPause
-         OutStd( I_( "Press any key to continue..." ) )
-         Inkey( 0 )
-      ENDIF
-   ENDIF
 
    ErrorLevel( nResult )
 
@@ -1966,7 +1965,7 @@ STATIC FUNCTION __hbmk( aArgs, nArgTarget, nLevel, /* @ */ lPause, /* @ */ lExit
       cBinExt := ".exe"
       cOptPrefix := "-/"
       /* NOTE: Some targets (watcom, pocc/xcc) need kernel32 explicitly. */
-      l_aLIBSYSCORE := { "kernel32", "user32", "gdi32", "advapi32", "ws2_32" }
+      l_aLIBSYSCORE := { "kernel32", "user32", "gdi32", "advapi32", "ws2_32", "iphlpapi" }
       l_aLIBSYSMISC := { "winspool", "comctl32", "comdlg32", "shell32", "uuid", "ole32", "oleaut32", "mpr", "winmm", "mapi32", "imm32", "msimg32", "wininet" }
    CASE hbmk[ _HBMK_cPLAT ] == "wce"
 #if ! defined( __PLATFORM__UNIX )
@@ -1988,7 +1987,7 @@ STATIC FUNCTION __hbmk( aArgs, nArgTarget, nLevel, /* @ */ lPause, /* @ */ lExit
       hbmk[ _HBMK_cDynLibExt ] := ".dll"
       cBinExt := ".exe"
       cOptPrefix := "-/"
-      l_aLIBSYSCORE := { "coredll", "ws2" }
+      l_aLIBSYSCORE := { "coredll", "ws2", "iphlpapi" }
       l_aLIBSYSMISC := { "ceshell", "uuid", "ole32", "oleaut32", "wininet", "commdlg", "commctrl" }
    OTHERWISE
       _hbmk_OutErr( hbmk, hb_StrFormat( I_( "Error: Platform value unknown: %1$s" ), hbmk[ _HBMK_cPLAT ] ) )
@@ -2398,17 +2397,29 @@ STATIC FUNCTION __hbmk( aArgs, nArgTarget, nLevel, /* @ */ lPause, /* @ */ lExit
 
    /* Process build-time configuration */
 
-   #if defined( HB_HAS_WATT )
-      IF hbmk[ _HBMK_cPLAT ] == "dos"
-         SWITCH hbmk[ _HBMK_cCOMP ]
-         CASE "djgpp"  ; AAdd( hbmk[ _HBMK_aLIBUSERSYS ], "watt" ) ; EXIT
-         CASE "watcom" ; AAdd( hbmk[ _HBMK_aLIBUSERSYS ], "wattcpwf" ) ; EXIT
-         ENDSWITCH
-         IF hb_DirExists( tmp := hb_DirSepToOS( GetEnv( "WATT_ROOT" ) ) + hb_ps() + "lib" )
-            AAdd( hbmk[ _HBMK_aLIBPATH ], tmp )
-         ENDIF
+   IF hbmk[ _HBMK_cPLAT ] == "dos"
+      SWITCH hbmk[ _HBMK_cCOMP ]
+      CASE "djgpp"  ; tmp := "watt"     ; cLibLibPrefix := "lib" ; cLibExt := ".a"   ; EXIT
+      CASE "watcom" ; tmp := "wattcpwf" ; cLibLibPrefix := ""    ; cLibExt := ".lib" ; EXIT
+      OTHERWISE     ; tmp := NIL
+      ENDSWITCH
+
+      AAdd( hbmk[ _HBMK_aLIBUSERSYS ], "hbpmcom" )
+      IF ! Empty( tmp )
+         #if defined( HB_HAS_WATT )
+            AAdd( hbmk[ _HBMK_aLIBUSERSYSPRE ], tmp )
+            IF hb_DirExists( tmp1 := hb_DirSepToOS( GetEnv( "WATT_ROOT" ) ) + hb_ps() + "lib" )
+               AAdd( hbmk[ _HBMK_aLIBPATH ], tmp1 )
+            ENDIF
+         #else
+            IF hb_DirExists( tmp1 := hb_DirSepToOS( GetEnv( "WATT_ROOT" ) ) + hb_ps() + "lib" ) .AND. ;
+               hb_FileExists( tmp1 + hb_ps() + cLibLibPrefix + tmp + cLibExt )
+               AAdd( hbmk[ _HBMK_aLIBPATH ], tmp1 )
+               AAdd( hbmk[ _HBMK_aLIBUSERSYSPRE ], tmp )
+            ENDIF
+         #endif
       ENDIF
-   #endif
+   ENDIF
 
    /* Process automatic make files in current dir. */
    IF hbmk[ _HBMK_lAutoHBM ] .AND. hb_FileExists( _HBMK_AUTOHBM_NAME )
@@ -5230,9 +5241,12 @@ STATIC FUNCTION __hbmk( aArgs, nArgTarget, nLevel, /* @ */ lPause, /* @ */ lExit
          IF ! HBMK_ISCOMP( "icc|iccia64" )
             cBin_Res := "rc.exe"
             cOpt_Res := "{FR} -fo {OS} {IR}"
+#if 0
+            /* NOTE: Compiler version is not enough to detect supported parameters when Platform SDK rc.exe is used. */
             IF hbmk[ _HBMK_nCOMPVer ] >= 1600
                cOpt_Res := "-nologo " + cOpt_Res  /* NOTE: Only in MSVC 2010 and upper. [vszakats] */
             ENDIF
+#endif
             cResExt := ".res"
          ENDIF
 
@@ -5983,30 +5997,28 @@ STATIC FUNCTION __hbmk( aArgs, nArgTarget, nLevel, /* @ */ lPause, /* @ */ lExit
             ENDIF
          NEXT
 
-         IF hb_mtvm() .AND. Len( aThreads ) > 1
-            FOR EACH thread IN aThreads
-               hb_threadJoin( thread[ 1 ], @tmp )
-               IF tmp != 0
-                  IF Len( aThreads ) > 1
-                     _hbmk_OutErr( hbmk, hb_StrFormat( I_( "Error: Running Harbour compiler job #%1$d. %2$d" ), thread:__enumIndex(), tmp ) )
-                  ELSE
-                     _hbmk_OutErr( hbmk, hb_StrFormat( I_( "Error: Running Harbour compiler. %1$d" ), tmp ) )
-                  ENDIF
-                  IF ! hbmk[ _HBMK_lQuiet ]
-                     OutErr( ArrayToList( thread[ 2 ] ) + _OUT_EOL )
-                  ENDIF
-                  IF ! hbmk[ _HBMK_lIGNOREERROR ]
-                     IF lDeleteWorkDir
-                        hb_DirDelete( hbmk[ _HBMK_cWorkDir ] )
-                     ENDIF
-                     IF hbmk[ _HBMK_lBEEP ]
-                        DoBeep( .F. )
-                     ENDIF
-                     RETURN _EXIT_COMPPRG
-                  ENDIF
+         FOR EACH thread IN aThreads
+            hb_threadJoin( thread[ 1 ], @tmp )
+            IF tmp != 0
+               IF Len( aThreads ) > 1
+                  _hbmk_OutErr( hbmk, hb_StrFormat( I_( "Error: Running Harbour compiler job #%1$d. %2$d" ), thread:__enumIndex(), tmp ) )
+               ELSE
+                  _hbmk_OutErr( hbmk, hb_StrFormat( I_( "Error: Running Harbour compiler. %1$d" ), tmp ) )
                ENDIF
-            NEXT
-         ENDIF
+               IF ! hbmk[ _HBMK_lQuiet ]
+                  OutErr( ArrayToList( thread[ 2 ] ) + _OUT_EOL )
+               ENDIF
+               IF ! hbmk[ _HBMK_lIGNOREERROR ]
+                  IF lDeleteWorkDir
+                     hb_DirDelete( hbmk[ _HBMK_cWorkDir ] )
+                  ENDIF
+                  IF hbmk[ _HBMK_lBEEP ]
+                     DoBeep( .F. )
+                  ENDIF
+                  RETURN _EXIT_COMPPRG
+               ENDIF
+            ENDIF
+         NEXT
       ELSE
          /* Use external compiler */
 
@@ -6775,7 +6787,7 @@ STATIC FUNCTION __hbmk( aArgs, nArgTarget, nLevel, /* @ */ lPause, /* @ */ lExit
                      aThreads := {}
                      FOR EACH aTO_DO IN ArraySplit( l_aCGEN_TO_DO, l_nJOBS )
                         IF hb_mtvm() .AND. Len( aTO_DO:__enumBase() ) > 1
-                           AAdd( aThreads, hb_threadStart( @CompileCLoop(), hbmk, aTO_DO, cBin_CompCGEN, cOpt_CompCPass, hReplace, cObjExt, nOpt_Esc, nOpt_FNF, aTO_DO:__enumIndex(), Len( aTO_DO:__enumBase() ) ) )
+                           AAdd( aThreads, hb_threadStart( @CompileCLoop(), hbmk, aTO_DO, cBin_CompCGEN, cOpt_CompCPass, hb_HClone( hReplace ), cObjExt, nOpt_Esc, nOpt_FNF, aTO_DO:__enumIndex(), Len( aTO_DO:__enumBase() ) ) )
                         ELSE
                            IF ! CompileCLoop( hbmk, aTO_DO, cBin_CompCGEN, cOpt_CompCPass, hReplace, cObjExt, nOpt_Esc, nOpt_FNF, 0, 0 )
                               IF ! hbmk[ _HBMK_lIGNOREERROR ]
@@ -6786,16 +6798,14 @@ STATIC FUNCTION __hbmk( aArgs, nArgTarget, nLevel, /* @ */ lPause, /* @ */ lExit
                         ENDIF
                      NEXT
 
-                     IF hb_mtvm() .AND. Len( aThreads ) > 1
-                        FOR EACH thread IN aThreads
-                           hb_threadJoin( thread, @tmp )
-                           IF ! tmp
-                              IF ! hbmk[ _HBMK_lIGNOREERROR ]
-                                 hbmk[ _HBMK_nExitCode ] := _EXIT_COMPC
-                              ENDIF
+                     FOR EACH thread IN aThreads
+                        hb_threadJoin( thread, @tmp )
+                        IF ! tmp
+                           IF ! hbmk[ _HBMK_lIGNOREERROR ]
+                              hbmk[ _HBMK_nExitCode ] := _EXIT_COMPC
                            ENDIF
-                        NEXT
-                     ENDIF
+                        ENDIF
+                     NEXT
                   ELSE
                      hReplace[ "{OO}" ] := FNameEscape( hb_FNameExtSet( hbmk[ _HBMK_cPROGNAME ], cObjExt ), nOpt_Esc, nOpt_FNF )
                      hReplace[ "{OW}" ] := FNameEscape( hbmk[ _HBMK_cWorkDir ], nOpt_Esc, nOpt_FNF )
@@ -6860,9 +6870,9 @@ STATIC FUNCTION __hbmk( aArgs, nArgTarget, nLevel, /* @ */ lPause, /* @ */ lExit
 
                         IF ! hbmk[ _HBMK_lDONTEXEC ]
                            IF hb_mtvm() .AND. Len( aTO_DO:__enumBase() ) > 1
-                              AAdd( aThreads, { hb_threadStart( @hb_processRun(), cCommand ), cCommand } )
+                              AAdd( aThreads, { hb_threadStart( @hbmk_hb_processRunFile(), cCommand, cScriptFile ), cCommand } )
                            ELSE
-                              IF ( tmp := hb_processRun( cCommand ) ) != 0
+                              IF ( tmp := hbmk_hb_processRunFile( cCommand, cScriptFile ) ) != 0
                                  _hbmk_OutErr( hbmk, hb_StrFormat( I_( "Error: Running C/C++ compiler. %1$d" ), tmp ) )
                                  IF ! hbmk[ _HBMK_lQuiet ]
                                     OutErr( cCommand + _OUT_EOL )
@@ -6873,31 +6883,28 @@ STATIC FUNCTION __hbmk( aArgs, nArgTarget, nLevel, /* @ */ lPause, /* @ */ lExit
                                  ENDIF
                               ENDIF
                            ENDIF
-                        ENDIF
-
-                        IF ! Empty( cScriptFile )
+                        ELSEIF ! Empty( cScriptFile )
                            FErase( cScriptFile )
                         ENDIF
+
                      NEXT
 
-                     IF hb_mtvm() .AND. Len( aThreads ) > 1
-                        FOR EACH thread IN aThreads
-                           hb_threadJoin( thread[ 1 ], @tmp )
-                           IF tmp != 0
-                              IF Len( aThreads ) > 1
-                                 _hbmk_OutErr( hbmk, hb_StrFormat( I_( "Error: Running C/C++ compiler job #%1$d. %2$d" ), thread:__enumIndex(), tmp ) )
-                              ELSE
-                                 _hbmk_OutErr( hbmk, hb_StrFormat( I_( "Error: Running C/C++ compiler. %1$d" ), tmp ) )
-                              ENDIF
-                              IF ! hbmk[ _HBMK_lQuiet ]
-                                 OutErr( thread[ 2 ] + _OUT_EOL )
-                              ENDIF
-                              IF ! hbmk[ _HBMK_lIGNOREERROR ]
-                                 hbmk[ _HBMK_nExitCode ] := _EXIT_COMPC
-                              ENDIF
+                     FOR EACH thread IN aThreads
+                        hb_threadJoin( thread[ 1 ], @tmp )
+                        IF tmp != 0
+                           IF Len( aThreads ) > 1
+                              _hbmk_OutErr( hbmk, hb_StrFormat( I_( "Error: Running C/C++ compiler job #%1$d. %2$d" ), thread:__enumIndex(), tmp ) )
+                           ELSE
+                              _hbmk_OutErr( hbmk, hb_StrFormat( I_( "Error: Running C/C++ compiler. %1$d" ), tmp ) )
                            ENDIF
-                        NEXT
-                     ENDIF
+                           IF ! hbmk[ _HBMK_lQuiet ]
+                              OutErr( thread[ 2 ] + _OUT_EOL )
+                           ENDIF
+                           IF ! hbmk[ _HBMK_lIGNOREERROR ]
+                              hbmk[ _HBMK_nExitCode ] := _EXIT_COMPC
+                           ENDIF
+                        ENDIF
+                     NEXT
 
                      IF lCHD_Comp .AND. cCHD_DirOld != NIL
                         hb_cwd( cCHD_DirOld )
@@ -11391,7 +11398,8 @@ STATIC FUNCTION HBM_Load( hbmk, aParams, cFileName, nNestingLevel, lProcHBP, cPa
                               aArgs := AClone( hbmk[ _HBMK_aArgs ] )
                               aArgs[ hbmk[ _HBMK_nArgTarget ] ] := cHBP
                               nResult := __hbmk( aArgs, hbmk[ _HBMK_nArgTarget ], hbmk[ _HBMK_nLevel ] + 1, @hbmk[ _HBMK_lPause ] )
-                              IF nResult != 0
+                              IF nResult != _EXIT_OK .AND. ;
+                                 nResult != _EXIT_STOP
                                  RETURN nResult
                               ENDIF
                            ELSE
@@ -13155,6 +13163,18 @@ STATIC FUNCTION Apple_App_Template_Info_plist()
 </plist>
 #pragma __endtext
 
+STATIC FUNCTION hbmk_hb_processRunFile( cCommand, cTempFile )
+
+   LOCAL nResult
+
+   nResult := hb_processRun( cCommand )
+
+   IF ! Empty( cTempFile )
+      FErase( cTempFile )
+   ENDIF
+
+   RETURN nResult
+
 STATIC FUNCTION hbmk_hb_processRunCatch( cCommand, /* @ */ cStdOutErr )
 
    LOCAL nExitCode
@@ -14182,7 +14202,7 @@ STATIC FUNCTION __plugin_ext()
  * Harbour Project source code:
  * extension manager plugin
  *
- * Copyright 2012-2013 Viktor Szakats (harbour syenar.net)
+ * Copyright 2012-2013 Viktor Szakats (vszakats.net/harbour)
  * www - http://harbour-project.org
  */
 
@@ -16411,7 +16431,7 @@ STATIC PROCEDURE ShowHelp( hbmk, lMore, lLong )
 
    LOCAL aLst_Auth := { ;
       NIL, ;
-      { "Viktor Szakáts (harbour syenar.net)", "" } }
+      { "Viktor Szakáts (vszakats.net/harbour)", "" } }
 
    // ; Examples
 

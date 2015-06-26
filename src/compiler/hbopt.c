@@ -965,8 +965,20 @@ static HB_BOOL hb_compIsUncondJump( HB_BYTE bPCode )
 {
    return bPCode == HB_P_JUMPNEAR ||
           bPCode == HB_P_JUMP ||
-          bPCode == HB_P_JUMPFAR ||
-          bPCode == HB_P_SEQEND;
+          bPCode == HB_P_JUMPFAR;
+/*   || bPCode == HB_P_SEQEND;
+   BEGIN SEQUENCE/END SEQUENCE logic could not be processed using conditional/unconditional
+   jumps. I set HB_P_SEQEND as conditional jump though this PCode instruction is processed
+   as unconditional jump by Harbour VM. This hack solves 'Variable is assigned but not used'
+   warning false positive in code:
+     BEGIN SEQUENCE
+        nI := 1
+        Break( NIL )
+     RECOVER
+        ? nI
+     END SEQUENCE
+   [Mindaugas]
+ */
 }
 
 #if 0
@@ -1286,7 +1298,7 @@ static int hb_compPCodeTraceAssignedUnused( PHB_HFUNC pFunc, HB_SIZE nPos, HB_BY
                if( fCanBreak )
                {
                   nPos += hb_compPCodeSize( pFunc, nPos );
-                  while( pFunc->pCode[ nPos ] != HB_P_ENDPROC && pFunc->pCode[ nPos ] != HB_P_ENDBLOCK && 
+                  while( pFunc->pCode[ nPos ] != HB_P_ENDPROC && pFunc->pCode[ nPos ] != HB_P_ENDBLOCK &&
                          pFunc->pCode[ nPos ] != HB_P_SEQBEGIN && pFunc->pCode[ nPos ] != HB_P_SEQEND )
                   {
                      nPos += hb_compPCodeSize( pFunc, nPos );
@@ -1422,7 +1434,7 @@ static void hb_compPCodeEnumAssignedUnused( HB_COMP_DECL, PHB_HFUNC pFunc, PHB_O
                bCodeNext2 == HB_P_DECEQ ||
                bCodeNext2 == HB_P_INCEQ ) )
          {
-            fCheck = 1;
+            fCheck = HB_TRUE;
          }
       }
 
@@ -1606,8 +1618,7 @@ void hb_compPCodeTraceOptimizer( HB_COMP_DECL )
    }
 
    /* Initial scan */
-   pLocals = ( PHB_OPT_LOCAL ) hb_xgrab( sizeof( HB_OPT_LOCAL ) * usLocalCount );
-   memset( pLocals, 0, sizeof( HB_OPT_LOCAL ) * usLocalCount );
+   pLocals = ( PHB_OPT_LOCAL ) hb_xgrabz( sizeof( HB_OPT_LOCAL ) * usLocalCount );
    hb_compPCodeEnumScanLocals( pFunc, pLocals );
 
    /* Check */

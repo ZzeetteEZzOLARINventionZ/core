@@ -2,7 +2,7 @@
  * Harbour Project source code:
  * Harbour NETIO server management client engine
  *
- * Copyright 2009-2013 Viktor Szakats (harbour syenar.net)
+ * Copyright 2009-2013 Viktor Szakats (vszakats.net/harbour)
  * www - http://harbour-project.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -109,7 +109,7 @@ STATIC FUNCTION hbnetiocon_init( hConIO, aParam )
       "filtsave"      => { ""               , "Save filters to disk."                          , {| netiocli | cmdConnFilterSave( netiocli ) } },;
       "stop"          => { "[<ip:port>|all]", "Stop specified connection(s)."                  , {| netiocli, cCommand | cmdConnStop( netiocli, cCommand ) } },;
       "clientinfo"    => { "[<ip:port>"     , "Show client details."                           , {| netiocli, cCommand | cmdConnClientInfo( netiocli, cCommand ) } },;
-      "quit"          => { ""               , "Stop server."                                   , {| netiocli | cmdShutdown( netiocli ) } },;
+      "shutdown"      => { ""               , "Stop server."                                   , {| netiocli | cmdShutdown( netiocli ) } },;
       "help"          => { ""               , "Display this help."                             , {| netiocli | cmdHelp( netiocli ) } } }
 
    IF ! Empty( cPassword )
@@ -331,7 +331,7 @@ STATIC FUNCTION XToStrX( xValue )
 STATIC PROCEDURE cmdAbout( netiocli )
 
    hbnetiocon_dispevent( netiocli, "Harbour NETIO Server Management Console " + StrTran( Version(), "Harbour " ) )
-   hbnetiocon_dispevent( netiocli, "Copyright (c) 2009-2013, Viktor Szakats" )
+   hbnetiocon_dispevent( netiocli, "Copyright (c) 2009-2015, Viktor Szakats" )
    hbnetiocon_dispevent( netiocli, "http://harbour-project.org/" )
 
    RETURN

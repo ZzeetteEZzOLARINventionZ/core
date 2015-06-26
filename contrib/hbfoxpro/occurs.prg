@@ -1,8 +1,8 @@
 /*
  * Harbour Project source code:
- * FieldDeci() FlagShip compatible function
+ * FoxPro compatible Occurs() function
  *
- * Copyright 2010 Przemyslaw Czerpak <druzus@acn.waw.pl>
+ * Copyright 2014 Przemyslaw Czerpak <druzus / at / priv.onet.pl>
  * www - http://harbour-project.org
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,13 @@
  *
  */
 
-#include "hbapi.h"
+FUNCTION Occurs( cSub, cStr )
+   LOCAL nCount := 0, nPos := 0
 
-HB_FUNC_TRANSLATE( FIELDDECI, HB_FIELDDEC )
+   IF HB_ISSTRING( cSub ) .AND. HB_ISSTRING( cStr )
+      DO WHILE ( nPos := hb_At( cSub, cStr, nPos + 1 ) ) != 0
+         ++nCount
+      ENDDO
+   ENDIF
+
+   RETURN nCount

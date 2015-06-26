@@ -88,16 +88,33 @@ static HB_GARBAGE_FUNC( hb_hashGarbageRelease )
 
    if( pBaseHash->nSize > 0 )
    {
-      PHB_HASHPAIR pPairs = pBaseHash->pPairs;
-      HB_SIZE nLen = pBaseHash->nLen;
+      while( pBaseHash->nLen )
+      {
+         PHB_ITEM pKey, pVal;
 
-      /*
-       * clear the pBaseHash->pPairs to avoid infinite loop in cross
-       * referenced items when pBaseArray is not freed due to buggy
-       * object destructor [druzus]
-       */
-      pBaseHash->pPairs = NULL;
-      pBaseHash->nLen  = 0;
+         pBaseHash->nLen--;
+         pKey = &pBaseHash->pPairs[ pBaseHash->nLen ].key;
+         pVal = &pBaseHash->pPairs[ pBaseHash->nLen ].value;
+
+         /* small hack for buggy destructors in hash items */
+         pBaseHash->iFlags |= HB_HASH_RESORT;
+
+         if( HB_IS_GCITEM( pKey ) && HB_IS_GCITEM( pVal ) )
+         {
+            HB_STACK_TLS_PRELOAD
+
+            hb_itemRawMove( hb_stackAllocItem(), pVal );
+            hb_itemClear( pKey );
+            hb_stackPop();
+         }
+         else
+         {
+            if( HB_IS_COMPLEX( pKey ) )
+               hb_itemClear( pKey );
+            if( HB_IS_COMPLEX( pVal ) )
+               hb_itemClear( pVal );
+         }
+      }
 
       if( pBaseHash->pnPos )
       {
@@ -105,15 +122,13 @@ static HB_GARBAGE_FUNC( hb_hashGarbageRelease )
          pBaseHash->pnPos = NULL;
       }
 
-      while( nLen-- )
+      if( pBaseHash->pPairs )
       {
-         if( HB_IS_COMPLEX( &pPairs[ nLen ].key ) )
-            hb_itemClear( &pPairs[ nLen ].key );
-         if( HB_IS_COMPLEX( &pPairs[ nLen ].value ) )
-            hb_itemClear( &pPairs[ nLen ].value );
+         hb_xfree( pBaseHash->pPairs );
+         pBaseHash->pPairs = NULL;
       }
-      hb_xfree( pPairs );
    }
+
    if( pBaseHash->pDefault )
    {
       PHB_ITEM pDefault = pBaseHash->pDefault;
@@ -934,11 +949,11 @@ void * hb_hashId( PHB_ITEM pHash )
       return NULL;
 }
 
-void hb_hashCloneBody( PHB_ITEM pHash, PHB_ITEM pDest, PHB_NESTED_CLONED pClonedList )
+void hb_hashCloneBody( PHB_ITEM pDest, PHB_ITEM pHash, PHB_NESTED_CLONED pClonedList )
 {
    HB_SIZE nPos;
 
-   HB_TRACE( HB_TR_DEBUG, ( "hb_hashCloneBody(%p,%p,%p)", pHash, pDest, pClonedList ) );
+   HB_TRACE( HB_TR_DEBUG, ( "hb_hashCloneBody(%p,%p,%p)", pDest, pHash, pClonedList ) );
 
    hb_hashNew( pDest );
    pDest->item.asHash.value->iFlags = pHash->item.asHash.value->iFlags;
@@ -961,7 +976,7 @@ void hb_hashCloneBody( PHB_ITEM pHash, PHB_ITEM pDest, PHB_NESTED_CLONED pCloned
       hb_itemCopy( &pDest->item.asHash.value->pPairs[ nPos ].key,
                    &pHash->item.asHash.value->pPairs[ nPos ].key );
       pDest->item.asHash.value->nLen++;
-      hb_cloneNested( &pDest->item.asHash.value->pPairs[ nPos ].value, pValue, pClonedList );
+      hb_nestedCloneDo( &pDest->item.asHash.value->pPairs[ nPos ].value, pValue, pClonedList );
    }
 }
 
@@ -971,22 +986,11 @@ PHB_ITEM hb_hashCloneTo( PHB_ITEM pDest, PHB_ITEM pHash )
 
    if( HB_IS_HASH( pHash ) )
    {
-      PHB_NESTED_CLONED pClonedList, pCloned;
+      HB_NESTED_CLONED clonedList;
 
-      pClonedList = ( PHB_NESTED_CLONED ) hb_xgrab( sizeof( HB_NESTED_CLONED ) );
-      pClonedList->value = ( void * ) pHash->item.asHash.value;
-      pClonedList->pDest = pDest;
-      pClonedList->pNext = NULL;
-
-      hb_hashCloneBody( pHash, pDest, pClonedList );
-
-      do
-      {
-         pCloned = pClonedList;
-         pClonedList = pClonedList->pNext;
-         hb_xfree( pCloned );
-      }
-      while( pClonedList );
+      hb_nestedCloneInit( &clonedList, ( void * ) pHash->item.asHash.value, pDest );
+      hb_hashCloneBody( pDest, pHash, &clonedList );
+      hb_nestedCloneFree( &clonedList );
    }
 
    return pDest;

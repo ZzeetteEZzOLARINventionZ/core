@@ -765,11 +765,10 @@ static size_t put_wstr( char *buffer, size_t bufsize, size_t size,
                         const _x_wstr wstr, int flags, int width,
                         int precision )
 {
+   const _x_wchar wstr_null[] = { '(', 'n', 'u', 'l', 'l', ')', 0 };
+
    if( ! wstr )
-   {
-      const _x_wchar wstr_null[] = { '(', 'n', 'u', 'l', 'l', ')', 0 };
       wstr = wstr_null;
-   }
 
    if( precision < 0 )
    {
@@ -779,9 +778,9 @@ static size_t put_wstr( char *buffer, size_t bufsize, size_t size,
    }
    else if( precision > 0 )
    {
-      int size = precision;
+      int precision_ori = precision;
       precision = 0;
-      while( precision < size && wstr[ precision ] )
+      while( precision < precision_ori && wstr[ precision ] )
          ++precision;
    }
 

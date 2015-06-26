@@ -4527,7 +4527,7 @@ static void hb_gtInitStatics( UINT usWinNum, LPCTSTR lpszWinName, USHORT usRow1,
       h = LoadLibrary( "msimg32.dll" );
       if( h )
       {
-         s_pWvwData->s_sApp->pfnGF = ( wvwGradientFill ) GetProcAddress( h, "GradientFill" );
+         s_pWvwData->s_sApp->pfnGF = ( wvwGradientFill ) HB_WINAPI_GETPROCADDRESS( h, "GradientFill" );
          if( s_pWvwData->s_sApp->pfnGF )
             s_pWvwData->s_sApp->hMSImg32 = h;
       }
@@ -8170,7 +8170,7 @@ HB_FUNC( WVW_SETICON )
    else
    {
       void * hImageName;
-      hb_retptr( ( void * ) hb_gt_wvwSetWindowIconFromFile( usWinNum, HB_PARSTRDEF( 1, &hImageName, NULL ) ) );
+      hb_retptr( ( void * ) hb_gt_wvwSetWindowIconFromFile( usWinNum, HB_PARSTRDEF( 2, &hImageName, NULL ) ) );
       hb_strfree( hImageName );
    }
 }

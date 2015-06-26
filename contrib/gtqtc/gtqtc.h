@@ -322,15 +322,17 @@ typedef struct
    QIcon *     qIcon;                        /* application icon */
    QString *   wndTitle;                     /* window title */
 
-   HB_BOOL     fClosable;                    /* accept ALT+F4 and/or [x] button as CTRL+BREAK */
    HB_BOOL     fAltEnter;                    /* ALT+ENTER switch between fullscreen mode */
    HB_BOOL     fResizable;                   /* enable/disable window resizing */
    HB_BOOL     fResizeInc;                   /* enable/disable resize progression */
    HB_BOOL     fMaximized;                   /* enter/leave mximize mode */
+   HB_BOOL     fMinimized;                   /* enter/leave mximize ( e.g. as icon in taskbar ) mode */
    HB_BOOL     fFullScreen;                  /* enable/disable fullscreen mode */
    HB_BOOL     fSelectCopy;                  /* allow marking texts by mouse left button with shift */
+   HB_BOOL     fRepaint;                     /* force internal image repainting */
 
    int         iResizeMode;                  /* Sets the resizing mode either to FONT or ROWS */
+   int         iCloseMode;                   /* ==0 accept ALT+F4 and/or [x] button as CTRL+BREAK, >=1 generate HB_K_CLOSE, ==2 disable [x] */
 }
 HB_GTQTC, * PHB_GTQTC;
 
@@ -360,6 +362,7 @@ public:
    void repaintChars( const QRect & rect );
 
 protected:
+   void inputMethodEvent( QInputMethodEvent * event );
    void keyPressEvent( QKeyEvent * event );
    void keyReleaseEvent( QKeyEvent * event );
    void mousePressEvent( QMouseEvent * event );

@@ -55,10 +55,14 @@ HB_FUNC( VALTYPE )
    hb_retc( hb_itemTypeStr( hb_param( 1, HB_IT_ANY ) ) );
 }
 
+#if defined( HB_LEGACY_LEVEL5 )
+
 HB_FUNC( HB_ISNIL )
 {
    hb_retl( HB_ISNIL( 1 ) );
 }
+
+#endif
 
 HB_FUNC( HB_ISNUMERIC )
 {
@@ -112,7 +116,7 @@ HB_FUNC( HB_ISCHAR )
 
 HB_FUNC( HB_ISMEMO )
 {
-   hb_retl( ( hb_parinfo( 1 ) & HB_IT_MEMOFLAG ) != 0 );
+   hb_retl( HB_ISMEMO( 1 ) );
 }
 
 HB_FUNC( HB_ISARRAY )

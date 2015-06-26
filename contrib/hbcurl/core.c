@@ -2,7 +2,7 @@
  * Harbour Project source code:
  * libcurl 'easy' API - Harbour interface.
  *
- * Copyright 2008-2010 Viktor Szakats (harbour syenar.net)
+ * Copyright 2008-2010 Viktor Szakats (vszakats.net/harbour)
  * originally based on:
  * Copyright 2005 Luiz Rafael Culik Guimaraes <luiz at xharbour.com.br>
  * www - http://harbour-project.org
@@ -165,19 +165,24 @@ static HB_HASH_FUNC( hb_curl_HashCmp )
 
 static const char * hb_curl_StrHashNew( PHB_CURL hb_curl, const char * szValue )
 {
-   char * szHash;
-
-   if( ! hb_curl->pHash )
-      hb_curl->pHash = hb_hashTableCreate( HB_CURL_HASH_TABLE_SIZE,
-                                           hb_curl_HashKey, hb_curl_HashDel, hb_curl_HashCmp );
-
-   szHash = ( char * ) hb_hashTableFind( hb_curl->pHash, szValue );
-   if( ! szHash )
+   if( szValue )
    {
-      szHash = hb_strdup( szValue );
-      hb_hashTableAdd( hb_curl->pHash, szHash, szHash );
+      char * szHash;
+
+      if( ! hb_curl->pHash )
+         hb_curl->pHash = hb_hashTableCreate( HB_CURL_HASH_TABLE_SIZE,
+                                              hb_curl_HashKey, hb_curl_HashDel, hb_curl_HashCmp );
+
+      szHash = ( char * ) hb_hashTableFind( hb_curl->pHash, szValue );
+      if( ! szHash )
+      {
+         szHash = hb_strdup( szValue );
+         hb_hashTableAdd( hb_curl->pHash, szHash, szHash );
+      }
+      return szHash;
    }
-   return szHash;
+   else
+      return NULL;
 }
 
 #  define hb_curl_StrHash( c, s )  hb_curl_StrHashNew( ( c ), ( s ) )
@@ -193,17 +198,18 @@ static const char * hb_curl_StrHashNew( PHB_CURL hb_curl, const char * szValue )
 
 static void * hb_curl_xgrab( size_t size )
 {
-   return hb_xgrab( size );
+   return size > 0 ? hb_xgrab( size ) : NULL;
 }
 
 static void hb_curl_xfree( void * p )
 {
-   hb_xfree( p );
+   if( p )
+      hb_xfree( p );
 }
 
 static void * hb_curl_xrealloc( void * p, size_t size )
 {
-   return hb_xrealloc( p, size );
+   return size > 0 ? ( p ? hb_xrealloc( p, size ) : hb_xgrab( size ) ) : NULL;
 }
 
 static char * hb_curl_strdup( const char * s )
@@ -389,7 +395,7 @@ static int hb_curl_progress_callback( void * Cargo, double dltotal, double dlnow
       {
          hb_vmPushEvalSym();
          hb_vmPush( ( PHB_ITEM ) Cargo );
-         hb_vmPushDouble( ulnow > 0 ? ulnow   : dlnow, HB_DEFAULT_DECIMALS );
+         hb_vmPushDouble( ulnow > 0 ? ulnow : dlnow, HB_DEFAULT_DECIMALS );
          hb_vmPushDouble( ultotal > 0 ? ultotal : dltotal, HB_DEFAULT_DECIMALS );
          hb_vmSend( 2 );
 
@@ -567,13 +573,9 @@ static HB_GARBAGE_FUNC( PHB_CURL_release )
    /* Check if pointer is not NULL to avoid multiple freeing */
    if( hb_curl_ptr && *hb_curl_ptr )
    {
-      PHB_CURL hb_curl = *hb_curl_ptr;
-
-      /* set pointer to NULL to avoid multiple freeing */
-      *hb_curl_ptr = NULL;
-
       /* Destroy the object */
-      PHB_CURL_free( hb_curl, HB_TRUE );
+      PHB_CURL_free( *hb_curl_ptr, HB_TRUE );
+      *hb_curl_ptr = NULL;
    }
 }
 
@@ -642,13 +644,9 @@ HB_FUNC( CURL_EASY_CLEANUP )
 
       if( ph && *ph )
       {
-         PHB_CURL hb_curl = ( PHB_CURL ) *ph;
-
-         /* set pointer to NULL to avoid multiple freeing */
-         *ph = NULL;
-
          /* Destroy the object */
-         PHB_CURL_free( hb_curl, HB_TRUE );
+         PHB_CURL_free( ( PHB_CURL ) *ph, HB_TRUE );
+         *ph = NULL;
       }
    }
    else

@@ -395,8 +395,8 @@ extern HB_EXPORT void         hb_vmSetCDP( PHB_CODEPAGE pCDP );
 
 /* maximal size of unicode character in 'char' representation for buffers
  * To encode all ISO 10646 Universal Character Set (UCS) values (characters
- * can en encoded in 31-bit code space) in UTF-8 we need 6 bytes.
- * UC2 characters (16bytes) encoded in UTF8 needs 3 bytes.
+ * can be encoded in 31-bit code space) in UTF-8 we need 6 bytes.
+ * UC2 characters (16-bit) encoded in UTF-8 needs 3 bytes.
  * 8 seems to be a little bit redundant and large enough for all encodings.
  * In theory some other encodings may need more bytes but I do not know any
  * one used in practice. [druzus]
@@ -497,7 +497,7 @@ extern HB_EXPORT HB_BOOL      hb_cdpUTF8ToU16NextChar( HB_UCHAR ucChar, int * n,
 
 
 extern HB_EXPORT PHB_ITEM     hb_itemDeserializeCP( const char ** pBufferPtr, HB_SIZE * pnSize, PHB_CODEPAGE cdpIn, PHB_CODEPAGE cdpOut );
-extern HB_EXPORT char *       hb_itemSerializeCP( PHB_ITEM pItem, HB_BOOL fNumSize, PHB_CODEPAGE cdpIn, PHB_CODEPAGE cdpOut, HB_SIZE * pnSize );
+extern HB_EXPORT char *       hb_itemSerializeCP( PHB_ITEM pItem, int iFlags, PHB_CODEPAGE cdpIn, PHB_CODEPAGE cdpOut, HB_SIZE * pnSize );
 
 extern HB_EXPORT HB_WCHAR     hb_cdpUpperWC( PHB_CODEPAGE cdp, HB_WCHAR wc );
 

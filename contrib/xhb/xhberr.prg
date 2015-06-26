@@ -1,11 +1,11 @@
 /*
  * Harbour Project source code:
  * xHarbour default error handler and error functions:
- *    xhb_ErrorSys(), __BreakBlock(), __ErrorBlock(),
+ *    xhb_ErrorSys(), __ErrorBlock(),
  *    __MinimalErrorHandler(), xhb_ErrorNew()
  *
  * Copyright 2010 Przemyslaw Czerpak <druzus / at / priv.onet.pl>
- * Copyright 2009 Viktor Szakats (harbour syenar.net)
+ * Copyright 2009 Viktor Szakats (vszakats.net/harbour)
  * Copyright 2004 Ron Pinkas <ron @ xHarbour.com>
  * Copyright 1999 Antonio Linares <alinares@fivetech.com>
  * www - http://harbour-project.org
@@ -645,10 +645,6 @@ STATIC FUNCTION Arguments( oErr )
    ENDIF
 
    RETURN cArguments
-
-FUNCTION __BreakBlock()
-
-   RETURN {| e | Break( e ) }
 
 FUNCTION __ErrorBlock()
 

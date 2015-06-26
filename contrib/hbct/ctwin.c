@@ -1985,7 +1985,7 @@ static HB_BOOL hb_ctw_gt_PutChar( PHB_GT pGT, int iRow, int iCol,
       {
          iWndRow = iRow - pWnd->iFirstRow;
          iWndCol = iCol - pWnd->iFirstCol;
-         iWndHeight = pWnd->iWidth;
+         iWndHeight = pWnd->iHeight;
          iWndWidth  = pWnd->iWidth;
       }
       else if( pWnd->fClip &&
@@ -2069,10 +2069,10 @@ static HB_BOOL hb_ctw_gt_Info( PHB_GT pGT, int iType, PHB_GT_INFO pInfo )
          hb_ctw_SelectWindow( HB_GTCTW_GET( pGT ), 0, HB_TRUE );
          fResult = HB_GTSUPER_INFO( pGT, iType, pInfo );
 
-         if( fResult && hb_arrayLen( pInfo->pResult ) >= 8 )
+         if( fResult && hb_arrayLen( pInfo->pResult ) >= 7 )
          {
             PHB_GTCTW pCTW = HB_GTCTW_GET( pGT );
-            hb_arraySetNI( pInfo->pResult, 8, HB_CTW_GETCURRENT( pCTW ) );
+            hb_arraySetNI( pInfo->pResult, 7, HB_CTW_GETCURRENT( pCTW ) );
          }
          return fResult;
       }
@@ -2084,8 +2084,8 @@ static HB_BOOL hb_ctw_gt_Info( PHB_GT pGT, int iType, PHB_GT_INFO pInfo )
 
          hb_ctw_SelectWindow( pCTW, 0, HB_TRUE );
          fResult = HB_GTSUPER_INFO( pGT, iType, pInfo );
-         if( fResult && hb_arrayLen( pInfo->pResult ) >= 8 )
-            hb_arraySetNI( pInfo->pResult, 8, iWindow );
+         if( fResult && hb_arrayLen( pInfo->pResult ) >= 7 )
+            hb_arraySetNI( pInfo->pResult, 7, iWindow );
          return fResult;
       }
       case HB_GTI_SETWIN:
@@ -2095,8 +2095,8 @@ static HB_BOOL hb_ctw_gt_Info( PHB_GT pGT, int iType, PHB_GT_INFO pInfo )
 
          hb_ctw_SelectWindow( pCTW, 0, HB_TRUE );
          fResult = HB_GTSUPER_INFO( pGT, iType, pInfo );
-         if( fResult && hb_arrayLen( pInfo->pNewVal ) >= 8 )
-            hb_ctw_SelectWindow( pCTW, hb_arrayGetNI( pInfo->pNewVal, 8 ),
+         if( fResult && hb_arrayLen( pInfo->pNewVal ) >= 7 )
+            hb_ctw_SelectWindow( pCTW, hb_arrayGetNI( pInfo->pNewVal, 7 ),
                                  HB_TRUE );
          return fResult;
       }
@@ -2114,9 +2114,8 @@ static int hb_ctw_gt_Alert( PHB_GT pGT, PHB_ITEM pMessage, PHB_ITEM pOptions,
 
    HB_TRACE( HB_TR_DEBUG, ( "hb_ctw_gt_Alert(%p,%p,%p,%d,%d,%f)", pGT, pMessage, pOptions, iClrNorm, iClrHigh, dDelay ) );
 
-   iOptions = ( int ) hb_arrayLen( pOptions );
-
-   if( HB_IS_STRING( pMessage ) && iOptions > 0 )
+   if( pMessage && HB_IS_STRING( pMessage ) &&
+       pOptions && ( iOptions = ( int ) hb_arrayLen( pOptions ) ) > 0 )
    {
       int iRows, iCols;
       HB_BOOL fScreen;
@@ -2291,7 +2290,7 @@ static int hb_ctw_gt_Alert( PHB_GT pGT, PHB_ITEM pMessage, PHB_ITEM pOptions,
                PHB_CODEPAGE cdp = hb_vmCDP();
                for( i = 1; i <= iOptions; ++i )
                {
-                  HB_SIZE nOptLen = hb_arrayGetCLen( pOptions, i );
+                  nOptLen = hb_arrayGetCLen( pOptions, i );
                   if( nOptLen > 0 )
                   {
                      HB_SIZE nIdx1 = 0, nIdx2 = 0;

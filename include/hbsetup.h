@@ -2,7 +2,7 @@
  * Harbour Project source code:
  * Header file for compiler and runtime configuration
  *
- * Copyright 2000-2009 Viktor Szakats (harbour syenar.net)
+ * Copyright 2000-2009 Viktor Szakats (vszakats.net/harbour)
  * Copyright 1999 Ryszard Glab <rglab@imid.med.pl>
  * www - http://harbour-project.org
  *
@@ -280,6 +280,7 @@
    Visual Studio 2008, version 9.0         1500
    Visual Studio 2010, version 10.0        1600
    Visual Studio 2012, version 11.0        1700
+   Visual Studio 2013, version 12.0        1800
 */
 
 /* ***********************************************************************
